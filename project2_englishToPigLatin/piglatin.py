@@ -14,13 +14,13 @@ PIG LATIN RULES
 '''
 
 import argparse
-import string
+import re
 
 vowels = ["a","e","i","o","u"]
 
 # return the rule number to perform on the word
 def ruleNum(word):
-    word.lower()
+    word = word.lower()
 
     # test if first and second letters are vowels or consonants
     firstIsVowel = 0
@@ -28,8 +28,9 @@ def ruleNum(word):
     for v in vowels:
         if v == word[0]:
             firstIsVowel = 1
-        if v == word[1]:
+        if len(word) >= 2 and v == word[1]:
             secondIsVowel = 1
+    #print(word, " : ", firstIsVowel, ", ", secondIsVowel)
 
     if ((not firstIsVowel) and secondIsVowel):
         #print(word, ": perform rule 1")
@@ -46,19 +47,16 @@ def ruleNum(word):
 def performRule1(word):
 # put the first letter of the word at the end of the word and add "ay" (EXAMPLE: happy = appyh + ay = appyhay)
     newWord = word[1:] + word[0] + "ay"
-    #print(word, " : ", newWord)
     return newWord
 
 def performRule2(word):
 # move the two consonants to the end of the word and add "ay" (EXAMPLE: Child = ildch + ay = ildchay)
     newWord = word[2:] + word[0:2] + "ay"
-    #print(word, " : ", newWord)
     return newWord
 
 def performRule3(word):
 # add the word "way" at the end of the word (EXAMPLE: Awesome = Awesome + way = awesomeway)
     newWord = word + "way"
-    #print(word, " : ", newWord)
     return newWord
 
 def main():
@@ -77,18 +75,19 @@ def main():
             # perform pig latin rules on current word
             rule = ruleNum(word)
 
-            punc = ""
-            if word[-1] in string.punctuation:
-                punc = word[-1]
-                word = word[:-1]
 
+
+
+            newWord = ""
             if rule == 1:
                 newWord = performRule1(word)
             elif rule == 2:
                 newWord = performRule2(word)
             elif rule == 3:
                 newWord = performRule3(word)
+            #print(word, " : ", newWord)
             finalStr = finalStr + newWord + punc + " "
+        finalStr = finalStr + "\n"
     fileIn.close()
 
     fileOut = open(args.output, "w")
