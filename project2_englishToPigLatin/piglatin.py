@@ -26,11 +26,11 @@ def ruleNum(word):
     firstIsVowel = 0
     secondIsVowel = 0
     for v in vowels:
-        if v == word[0]:
+        if len(word) >= 1 and v == word[0]:
             firstIsVowel = 1
         if len(word) >= 2 and v == word[1]:
             secondIsVowel = 1
-    #print(word, " : ", firstIsVowel, ", ", secondIsVowel)
+    print(word, " : ", firstIsVowel, ", ", secondIsVowel)
 
     if ((not firstIsVowel) and secondIsVowel):
         #print(word, ": perform rule 1")
@@ -72,21 +72,25 @@ def main():
     fileIn = open(args.input, "r") # open in read and text mode
     for line in fileIn:
         for word in line.split():
+            #strip punctuation from word
+            wordNoPunc = re.sub("[^A-Za-z]","",word)
+
             # perform pig latin rules on current word
-            rule = ruleNum(word)
-
-
-
-
-            newWord = ""
+            rule = ruleNum(wordNoPunc)
+            pigLat = ""
             if rule == 1:
-                newWord = performRule1(word)
+                pigLat = performRule1(wordNoPunc)
             elif rule == 2:
-                newWord = performRule2(word)
+                pigLat = performRule2(wordNoPunc)
             elif rule == 3:
-                newWord = performRule3(word)
+                pigLat = performRule3(wordNoPunc)
+            
+            # add back any punctuation
+            newWord = ""
+            newWord = word.replace(wordNoPunc,pigLat)
+            
             #print(word, " : ", newWord)
-            finalStr = finalStr + newWord + punc + " "
+            finalStr = finalStr + newWord + " "
         finalStr = finalStr + "\n"
     fileIn.close()
 
