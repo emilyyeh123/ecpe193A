@@ -10,7 +10,7 @@ main:
     # your code here
     whileLoop:
     blt $s2, $zero, exitWhile # if c<0, exit
-    addi $t0, $zero, $zero # initialize t0
+    addi $t0, $zero, 0 # initialize t0
 
     forLoop:
     addi $t0, $t0, 1 # i++
