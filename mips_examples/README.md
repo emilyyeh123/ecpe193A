@@ -6,3 +6,5 @@
 - Example 4: while() loop to compute sum of N numbers
 - Example 5: Function call with and without using stack (stack is used to preserve registers!)
 - Example 6: while() loop to compute sum of N numbers using a function
+
+[Basic MIPS Instruction Set](https://ecs-network.serv.pacific.edu/ecpe-170/tutorials/mips-instruction-set#section-0)
