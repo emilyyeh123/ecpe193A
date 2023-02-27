@@ -1,0 +1,58 @@
+
+# ----------TASK 1----------
+
+main:
+# Step 2, assign A and B to registers
+lw $s0, A
+lw $s1, B
+
+# Step 3
+add $t0, $s0, $s1 #A+B
+
+# Step 4
+sw $t0, C
+syscall
+
+.data
+A: .word 20
+B: .word 45
+C: .word 0
+
+
+
+
+# ----------TASK 2----------
+
+# array[12] = h + array[8]
+# $s2 = h
+# $s3 = base address of array
+# $t1 = temp
+lw $t1, 32($s3)
+add $t1, $s2, $t1
+sw $t1, 48($s3)
+
+
+
+
+# ----------Example: Accessing Arrays----------
+
+# g = h + array[i]
+# s1 = g
+# s2 = h
+# s3 = base address of array
+# s4 = i
+
+# calculate offset
+# multiply i by 4 bc an int is 4 bytes
+add $t1, $s4, $s4 # 2i
+add $t1, $t1, $t1 # 4i
+
+# get address of arr[i]
+add $t1, $t1, $s3
+
+# load arr[i]
+lw $t0, 0($t1)
+
+# compute add
+add $s1, $s2, $t0
+
