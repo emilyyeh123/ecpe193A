@@ -8,21 +8,22 @@ python3 asmToBinary.py --file program1.asm
 R-Type:
     - FORMAT: 6 op, 5 rs, 5 rt, 5 rd, 5 shamt, 6 funct
     - All r-type op codes: 000000
-    - add 100000 
-    - sub 100010
-    - sll 000000
-    - srl 000010
-    - slt 101010
+    - add rd, rs, rt 100000 
+    - sub rd, rs, rt 100010
+    - sll rd, rt, sa 000000
+    - srl rd, rt, sa 000010
+    - slt rd, rs, rt 101010
 I-Type:
     - FORMAT: 6 op, 5 rs, 5 rt, 16 address/immediate
-    - addi 001000
-    - beq 000100
-    - bne 000101
-    - lw 100011
-    - sw 101011
+    - addi rt, rs, imm 001000
+    - beq rs, rt, label 000100
+    - bne rs, rt, label 000101
+    - lw rt, imm(rs) 100011
+    - sw rt, imm(rs) 101011
 '''
 
 import argparse
+import re
 
 instrDict = {
     "r-type": ["add", "sub", "sll", "srl", "slt"],
@@ -72,138 +73,179 @@ def instrType(instr):
     for key, val in instrDict.items():
         if instr in val:
             return key
-    return 0 
+    return -1
 
-def getRegBin(reg):
-    # return 5-bit bin val of reg, 0 if reg not valid
+# convert registers to binary
+def regToBin(reg):
+    # return 5-bit bin val of reg, -1 if reg not valid
     if reg in regDict.keys():
         return regDict.get(reg)
 
     try:
-        reg = int(reg.replace("$", "")) # remove $ from str to get int
+        reg = int(reg[1:]) # remove $ from str to get int
         if reg>=0 and reg<=31:
             return format(reg, "05b")
     except:
-        return -1
+        pass
 
-def rTypeInstr(firstInstr, regs):
+    return -1
+
+# convert imm/shamt vals to binary
+# if imm, bits parameter should be 16
+# if shamt, bits parameter should be 5
+# neg nums are converted to twos complement
+def intToBin(bits, num):
+    try:
+        num = int(num)
+        
+        if num.bit_length() <= bits: #check if num fits within available bit length
+            bitFormat = "0" + str(bits) + "b"
+
+            if num < 0: # if neg num
+                num = num * (-1)
+                binNum = format(num, bitFormat)
+                # flip bits
+                binNum = binNum.replace("0", "2")
+                binNum = binNum.replace("1", "0")
+                binNum = binNum.replace("2", "1")
+                # add 1
+                binNum = format( int(binNum, 2) + int("1", 2) , bitFormat)
+            else:
+                binNum = format(num, bitFormat)
+            return binNum
+    except:
+        pass
+
+    return -1
+
+def rTypeInstr(instrVals):
     # FORMAT: 6 op, 5 rs, 5 rt, 5 rd, 5 shamt, 6 funct
-    strBin = ""
-    rd = "00000"
-    rs = "00000"
-    rt = "00000"
-    shamt = "00000"
-
     # All r-type op codes: 000000
-    strBin += "000000"
+    op = format(0, "06b")
+    rs = format(0, "05b")
+    rt = format(0, "05b")
+    rd = format(0, "05b")
+    shamt = format(0, "05b")
+    funct = format(0, "06b")
+    lineBin = ""
 
-    if len(regs) != 3:
-        return 0
-
-    if firstInstr == "add" or firstInstr == "sub" or firstInstr == "slt":
     # add rd, rs, rt 100000 
     # sub rd, rs, rt 100010
     # slt rd, rs, rt 101010
+    if instrVals[0] == "add" or instrVals[0] == "sub" or instrVals[0] == "slt":
+        if len(instrVals) == 4: # check for proper amount of instructions
+            if instrVals[0] == "add": 
+                funct = "100000"
+            elif instrVals[0] == "sub": 
+                funct = "100010"
+            elif instrVals[0] == "slt": 
+                funct = "101010"
+            rd = regToBin(instrVals[1])
+            rs = regToBin(instrVals[2])
+            rt = regToBin(instrVals[3])
+            lineBin = op + rs + rt + rd + shamt + funct
+            return lineBin
+    
+    # sll rd, rt, sa 000000
+    # srl rd, rt, sa 000010
+    elif instrVals[0] == "sll" or instrVals[0] == "srl":
+        if len(instrVals) == 4: # check for proper amount of instructions
+            if instrVals[0] == "sll": 
+                funct = "000000"
+            elif instrVals[0] == "srl": 
+                funct = "000010"
+            rd = regToBin(instrVals[1])
+            rt = regToBin(instrVals[2])
+            shamt = intToBin(5, instrVals[3])
+            lineBin = op + rs + rt + rd + shamt + funct
+            return lineBin
 
-        for i in range(len(regs)):
-        # get rs, rt, and rd vals
-            thisReg = getRegBin(regs[i])
-            if thisReg == -1:
-                return 0
-            elif i == 0:
-                rd = thisReg
-            elif i == 1:
-                rs = thisReg
-            elif i == 2:
-                rt = thisReg
+    return -1
 
-    elif firstInstr == "sll" or firstInstr == "srl":
-    # sll rd, rt, shamt 000000
-    # srl rd, rt, shamt 000010
-
-        for i in range(len(regs)):
-        # get rs, rt, and rd vals
-            thisReg = getRegBin(regs[i])
-            if thisReg == -1:
-                return 0
-            elif i == 0:
-                rd = thisReg
-            elif i == 1:
-                rt = thisReg
-            elif i == 2:
-                shamt = thisReg
-
-    # append rs, rt, rd, and shamt vals to binary str (in correct order)
-    strBin += (rs + rt + rd + shamt)
-
-    if firstInstr == "add":
-        strBin += "100000"
-    elif firstInstr == "sub":
-        strBin += "100010"
-    elif firstInstr == "slt":
-        strBin += "101010"
-    elif firstInstr == "sll":
-        strBin += "000000"
-    elif firstInstr == "srl":
-        strBin += "000010"
-
-    return strBin
-
-def iTypeInstr(firstInstr, regs):
+def iTypeInstr(instrVals):
     # FORMAT: 6 op, 5 rs, 5 rt, 16 address/immediate
+    op = format(0, "06b")
+    rs = format(0, "05b")
+    rt = format(0, "05b")
+    imm = format(0, "016b")
+    lineBin = ""
+
+    # addi rt, rs, imm 001000
+    if instrVals[0] == "addi":
+        if len(instrVals) == 4: # check for proper amount of instructions
+            op = "001000"
+            rt = regToBin(instrVals[1])
+            rs = regToBin(instrVals[2])
+            imm = intToBin(16, instrVals[3])
+
     # beq rs, rt, label 000100
     # bne rs, rt, label 000101
+    elif instrVals[0] == "beq" or instrVals[0] == "bne":
+        if len(instrVals) == 4: # check for proper amount of instructions
+            if instrVals[0] == "beq": 
+                op = "000100"
+            elif instrVals[0] == "bne": 
+                op = "000101"
+            rs = regToBin(instrVals[1])
+            rt = regToBin(instrVals[2])
+            imm = intToBin(16, instrVals[3])
+
     # lw rt, imm(rs) 100011
     # sw rt, imm(rs) 101011
-    strBin = ""
-    rs = "00000"
-    rt = "00000"
-    imm = format(0, "016b")
+    elif instrVals[0] == "lw" or instrVals[0] == "sw":
+        if len(instrVals) == 3: # check for proper amount of instructions
+            if instrVals[0] == "lw": 
+                op = "100011"
+            elif instrVals[0] == "sw": 
+                op = "101011"
+            rt = regToBin(instrVals[1])
+            immRS = instrVals[2].split("(") # separate instructions in second value
+            imm = intToBin(16, immRS[0])
+            rs = regToBin(immRS[1][:-1])
 
-    if firstInstr == "addi":
-    # addi rt, rs, imm 001000
+    if rs != -1 and rt != -1 and imm != -1:
+            lineBin = op + rs + rt + imm
+            return lineBin
 
-    return strBin
+    return -1
 
 def main():
     finalStr = ""
     lineBin = ""
     inval = 0 # flag to check if input is invalid
-    currType = 0
+    currType = -1
 
     parser = argparse.ArgumentParser(description = "MIPs Assembly to Binary Converter")
     parser.add_argument("--file", required = True, help = "name of input file")
     args = parser.parse_args()
 
     fileIn = open(args.file, "r")
+
     for line in fileIn:
-        getInstr = line.split()
-        if len(getInstr) != 2:
-            inval = 1
-            break
+        line = line.split("#", 1)[0]
+        line = line.strip() # remove leading and trailing whitespace (including \n)
 
-        firstInstr = getInstr[0]
+        if line != "": # if line not empty (if line not a comment)
+            splitInstr = re.split("\\s+|,", line)
+            #print(splitInstr, " ")
 
-        currType = instrType(firstInstr)
-        if currType == 0:
-            inval = 1
-            break
+            currType = instrType(splitInstr[0])
+            if currType == "r-type":
+                lineBin = rTypeInstr(splitInstr)
+            elif currType == "i-type":
+                lineBin = iTypeInstr(splitInstr)
+            else:
+                inval = 1
+                break
 
-        getInstr = getInstr[1].split(",")
-        print(getInstr)
-        if currType == "r-type":
-            lineBin = rTypeInstr(firstInstr, getInstr)
-        elif currType == "i-type":
-            lineBin = iTypeInstr(firstInstr, getInstr)
-        
-        if lineBin == 0:
-            inval = 1
-            break
-        else:
-            finalStr += lineBin
+            if lineBin == -1:
+                inval = 1
+                break
+            else:
+                finalStr += lineBin
 
-        print("")
         finalStr += "\n"
+    
     fileIn.close()
 
     # append invalid statement to output
