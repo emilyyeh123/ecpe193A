@@ -186,6 +186,7 @@ def iTypeInstr(instrVals):
                 op = "000100"
             elif instrVals[0] == "bne": 
                 op = "000101"
+            instrVals[3] = int(instrVals[3])/4
             rs = regToBin(instrVals[1])
             rt = regToBin(instrVals[2])
             imm = intToBin(16, instrVals[3])
