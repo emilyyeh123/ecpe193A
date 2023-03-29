@@ -16,10 +16,22 @@ out_registers.txt:
 '''
 import sys
 
+def writeCurrentPCReg(pcVal, regVals):
+    pcRegStr = str(pcVal)
+    for i in regVals:
+        pcRegStr += "|" + str(i)
+    return pcRegStr
+
 def main():
-    pc = 65536
     controlSignal = ""
-    pcRegVals = str(pc) + "|0|0|0|0|0|0|0|0\n" # initial state of pc & regs
+    pcRegVals = ""
+    pc = 65536
+    registers = [0,0,0,0,0,0,0,0]
+    rs = rt = rd = -1
+    imm = None
+
+    # initialize pc and register values
+    pcRegVals += writeCurrentPCReg(pc, registers) + "\n"
 
     # open input file
     f = sys.argv[1]
@@ -28,25 +40,37 @@ def main():
     for line in fileIn:
         line = line.split()
         pc += 4
-        pcRegVals += str(pc) + "|"
 
-        # extract instruction opcode
+        # extract instruction opcode, rs, and rt
         instrOp = line[0][0:6]
+        rs = int( line[0][6:11] , 2 ) # typecast binary reg val to dec
+        rt = int( line[0][11:16] , 2 ) # typecast binary reg val to dec
+
+        # Check if r-type instr
         if instrOp == "000000":
-            # r-type instr
+            # set control signal
             controlSignal += "1001000100"
+
+            # extract instruction func code & rd
             instrFunc = line[0][26:32]
+            rd = int( line[0][16:21] , 2 ) # typecast binary reg val to dec
+
             if instrFunc == "100000":
-                print("add func")
+                print("add   rd ", rd, " rs ", rs, " rt ", rt)
             elif instrFunc == "100010":
-                print("sub func")
-        # if i-type instr, then ALUOPcode = 00
+                print("sub   rd ", rd, " rs ", rs, " rt ", rt)
+
+        # Check if i-type instr
         elif instrOp == "001000":
+            # set control signal
             controlSignal += "0101000000"
-            print("i-type instr")
+
+            # extract instruction func code & rd
+            imm = int( line[0][16:32] , 2 )
+            print("addi  rt ", rt, " rs ", rs, " imm ", imm)
 
         controlSignal += "\n"
-        pcRegVals += "\n"
+        pcRegVals += writeCurrentPCReg(pc, registers) + "\n"
 
     fileIn.close()
 
