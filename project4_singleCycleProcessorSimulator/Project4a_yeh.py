@@ -29,6 +29,7 @@ def main():
     registers = [0,0,0,0,0,0,0,0]
     rs = rt = rd = -1
     imm = None
+    lineNum = 0
 
     # initialize pc and register values
     pcRegVals += writeCurrentPCReg(pc, registers) + "\n"
@@ -38,41 +39,66 @@ def main():
     fileIn = open(f, "r")
     
     for line in fileIn:
-        line = line.split()
-        pc += 4
+        # should the program determine that more than 100 lines have been written,
+        # the program should close the files and exit gracefully (this is unlikely)
+        if lineNum <= 100: 
+            line = line.split()
+            pc += 4
 
-        # extract instruction opcode, rs, and rt
-        instrOp = line[0][0:6]
-        rs = int( line[0][6:11] , 2 ) # typecast binary reg val to dec
-        rt = int( line[0][11:16] , 2 ) # typecast binary reg val to dec
+            # extract instruction opcode, rs, and rt
+            instrOp = line[0][0:6]
+            rs = int( line[0][6:11] , 2 ) # typecast binary reg val to dec
+            rt = int( line[0][11:16] , 2 ) # typecast binary reg val to dec
 
-        # Check if r-type instr
-        if instrOp == "000000":
-            # set control signal
-            controlSignal += "1001000100"
+            # Check if r-type instr
+            if instrOp == "000000":
+                # set control signal
+                controlSignal += "1001000100"
 
-            # extract instruction func code & rd
-            instrFunc = line[0][26:32]
-            rd = int( line[0][16:21] , 2 ) # typecast binary reg val to dec
+                # extract instruction func code & rd
+                instrFunc = line[0][26:32]
+                rd = int( line[0][16:21] , 2 ) # typecast binary reg val to dec
 
-            if instrFunc == "100000":
-                print("add   rd ", rd, " rs ", rs, " rt ", rt)
-            elif instrFunc == "100010":
-                print("sub   rd ", rd, " rs ", rs, " rt ", rt)
+                if instrFunc == "100000":
+                    print("add   rd ", rd, " rs ", rs, " rt ", rt)
+                    # perform instruction on appropriate registers
+                    registers[rd] = registers[rs] + registers[rt]
+                elif instrFunc == "100010":
+                    print("sub   rd ", rd, " rs ", rs, " rt ", rt)
+                    # perform instruction on appropriate registers
+                    registers[rd] = registers[rs] - registers[rt]
 
-        # Check if i-type instr
-        elif instrOp == "001000":
-            # set control signal
-            controlSignal += "0101000000"
+            # Check if i-type instr (assuming only addi instr is valid)
+            elif instrOp == "001000":
+                # set control signal
+                controlSignal += "0101000000"
 
-            # extract instruction func code & rd
-            imm = int( line[0][16:32] , 2 )
-            print("addi  rt ", rt, " rs ", rs, " imm ", imm)
+                # extract instruction imm val
+                # imm is twos comp
+                # if first bit is 0, convert to dec normally
+                # otherwise flip bits and add 1
+                binNum = line[0][16:32]
+                if binNum[0] == "0":
+                    imm = int( binNum , 2 )
+                elif binNum[0] == "1":
+                    # flip bits
+                    binNum = binNum.replace("0", "2")
+                    binNum = binNum.replace("1", "0")
+                    binNum = binNum.replace("2", "1")
+                    # add 1 and set imm val
+                    imm = (int(binNum,2) + 1) * -1 
+                print("addi  rt ", rt, " rs ", rs, " imm ", imm)
 
-        controlSignal += "\n"
-        pcRegVals += writeCurrentPCReg(pc, registers) + "\n"
+                # perform instruction on appropriate registers
+                registers[rt] = registers[rs] + imm
+
+            controlSignal += "\n"
+            pcRegVals += writeCurrentPCReg(pc, registers) + "\n"
+            lineNum += 1
 
     fileIn.close()
+
+    print(lineNum)
 
     # create and fill output files
     fileControlOut = open("out_control.txt", "w")
