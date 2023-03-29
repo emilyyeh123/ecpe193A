@@ -60,11 +60,11 @@ def main():
                 rd = int( line[0][16:21] , 2 ) # typecast binary reg val to dec
 
                 if instrFunc == "100000":
-                    print("add   rd ", rd, " rs ", rs, " rt ", rt)
+                    #print("add   rd ", rd, " rs ", rs, " rt ", rt)
                     # perform instruction on appropriate registers
                     registers[rd] = registers[rs] + registers[rt]
                 elif instrFunc == "100010":
-                    print("sub   rd ", rd, " rs ", rs, " rt ", rt)
+                    #print("sub   rd ", rd, " rs ", rs, " rt ", rt)
                     # perform instruction on appropriate registers
                     registers[rd] = registers[rs] - registers[rt]
 
@@ -87,9 +87,9 @@ def main():
                     binNum = binNum.replace("2", "1")
                     # add 1 and set imm val
                     imm = (int(binNum,2) + 1) * -1 
-                print("addi  rt ", rt, " rs ", rs, " imm ", imm)
+                #print("addi  rt ", rt, " rs ", rs, " imm ", imm)
 
-                # perform instruction on appropriate registers
+                # perform addi instr on appropriate registers
                 registers[rt] = registers[rs] + imm
 
             controlSignal += "\n"
@@ -97,8 +97,6 @@ def main():
             lineNum += 1
 
     fileIn.close()
-
-    print(lineNum)
 
     # create and fill output files
     fileControlOut = open("out_control.txt", "w")
