@@ -32,11 +32,13 @@ def main():
 
     controlSignal = ""
     pcRegVals = ""
-    pc = 65536
+    pcInit = 65536
+    pc = pcInit # set curr pc val
     registers = [0,0,0,0,0,0,0,0]
     rs = rt = rd = -1
     imm = None
     lineNum = 0
+    segFault = False
 
     # open bin file and store each line in a list
     inpFileName = sys.argv[1]
@@ -44,8 +46,6 @@ def main():
     for line in binFile:
         binInstr.append(line.strip())
     binFile.close()
-    print(binInstr)
-    print(type(binInstr))
 
     # open memory file and store each line in a list
     inpFileName = sys.argv[2]
@@ -56,13 +56,30 @@ def main():
         except:
             pass
     memFile.close()
-    print(memVals)
-    print(type(memVals[0]))
+
+    # get max pc val
+    numOfInstructions = len(binInstr)
+    pcMax = pcInit + numOfInstructions*4
+
+    # initialize first line of pc and register values
+    pcRegVals += writeCurrentPCReg(pcInit, registers) + "\n"
+
+    # seg fault if pc out of bounds or if memory out of bounds
+    while not segFault:
+        pc += 4
+        print(pc, " | ", lineNum)
+
+        if lineNum == numOfInstructions-1 and pc == pcMax:
+            break
+        elif pc < pcInit or  pc > pcMax or lineNum >= 100:
+            segFault = True
+            break
+        lineNum += 1
+
+    if segFault == True:
+        print("!!! Segmentation Fault !!!\r\n")
 
 '''
-    # initialize pc and register values
-    pcRegVals += writeCurrentPCReg(pc, registers) + "\n"
-
     # open input file
     f = sys.argv[1]
     fileIn = open(f, "r")
