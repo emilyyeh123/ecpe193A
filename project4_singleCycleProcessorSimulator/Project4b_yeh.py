@@ -73,6 +73,7 @@ def main():
         rs = int( binInstr[lineNum][6:11] , 2 ) # typecast binary reg val to dec
         rt = int( binInstr[lineNum][11:16] , 2 ) # typecast binary reg val to dec
         #print(pc, " | ", lineNum, "\t\t", instrOp, rs, rt)
+        print(pc, " | ", lineNum, end = "\t\t")
 
         # Check if r-type instr
         if instrOp == "000000":
@@ -92,11 +93,8 @@ def main():
                 # perform instruction on appropriate registers
                 registers[rd] = registers[rs] - registers[rt]
 
-        # Check if i-type instr (assuming only addi instr is valid)
-        elif instrOp == "001000":
-            # set control signal
-            controlSignal += "010100000"
-
+        # otherwise, must be i-type instr
+        else:
             # extract instruction imm val
             # imm is twos comp
             # if first bit is 0, convert to dec normally
@@ -111,10 +109,50 @@ def main():
                 binNum = binNum.replace("2", "1")
                 # add 1 and set imm val
                 imm = (int(binNum,2) + 1) * -1 
-            print("addi  rt ", rt, " rs ", rs, " imm ", imm)
 
-            # perform addi instr on appropriate registers
-            registers[rt] = registers[rs] + imm
+            # check if addi instr
+            if instrOp == "001000":
+                print("addi  rt ", rt, " rs ", rs, " imm ", imm)
+                # set control signal
+                controlSignal += "010100000"
+                # perform addi instr on appropriate registers
+                registers[rt] = registers[rs] + imm
+
+            # check if beq instr
+            elif instrOp == "000100":
+                print("beq  rs ", rs, " rt ", rt, " label ", imm)
+                '''
+                # set control signal
+                controlSignal += "X0X000101"
+                # perform instr on appropriate registers
+                if registers[rt] == registers[rs]:
+                    lineNum += imm
+                    if imm < 0: # if imm is negative
+                        lineNum -= 1
+                    print("\t both registers are equal, beq instr performed")
+                '''
+
+            # check if bne instr
+            elif instrOp == "000101":
+                print("bne  rs ", rs, " rt ", rt, " label ", imm)
+                '''
+                # set control signal
+                controlSignal += "X0X000101"
+                # perform instr on appropriate registers
+                if registers[rt] == registers[rs]:
+                    lineNum += imm
+                    if imm < 0: # if imm is negative
+                        lineNum -= 1
+                    print("\t both registers are equal, beq instr performed")
+                '''
+
+            # check if lw instr
+            elif instrOp == "100011":
+                print("lw  rt ", rt, " imm(rs) ", imm, "(", rs, ")")
+
+            # check if sw instr
+            elif instrOp == "101011":
+                print("sw  rt ", rt, " imm(rs) ", imm, "(", rs, ")")
 
         controlSignal += "\n"
         pcRegVals += writeCurrentPCReg(pc, registers) + "\n"
