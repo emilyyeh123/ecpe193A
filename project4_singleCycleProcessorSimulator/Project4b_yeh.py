@@ -121,30 +121,28 @@ def main():
             # check if beq instr
             elif instrOp == "000100":
                 print("beq  rs ", rs, " rt ", rt, " label ", imm)
-                '''
                 # set control signal
                 controlSignal += "X0X000101"
-                # perform instr on appropriate registers
+                # perform instr, update pc & lineNum as necessary 
                 if registers[rt] == registers[rs]:
                     lineNum += imm
-                    if imm < 0: # if imm is negative
-                        lineNum -= 1
+                    pc += (imm*4)
                     print("\t both registers are equal, beq instr performed")
-                '''
+                else:
+                    print("\t beq false, continue to next instr")
 
             # check if bne instr
             elif instrOp == "000101":
                 print("bne  rs ", rs, " rt ", rt, " label ", imm)
-                '''
                 # set control signal
-                controlSignal += "X0X000101"
-                # perform instr on appropriate registers
-                if registers[rt] == registers[rs]:
+                controlSignal += "X0X000111"
+                # perform instr, update pc & lineNum as necessary 
+                if registers[rt] != registers[rs]:
                     lineNum += imm
-                    if imm < 0: # if imm is negative
-                        lineNum -= 1
+                    pc += (imm*4)
                     print("\t both registers are equal, beq instr performed")
-                '''
+                else:
+                    print("\t beq false, continue to next instr")
 
             # check if lw instr
             elif instrOp == "100011":
