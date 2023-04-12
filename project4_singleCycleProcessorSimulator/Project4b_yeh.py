@@ -180,13 +180,19 @@ def main():
 
     # create and fill output files
     fileControlOut = open("out_control.txt", "w")
-    fileRegOut = open("out_registers.txt", "w")
-
     fileControlOut.write(controlSignal)
-    fileRegOut.write(pcRegVals)
-
     fileControlOut.close()
+
+    fileRegOut = open("out_registers.txt", "w")
+    fileRegOut.write(pcRegVals)
     fileRegOut.close()
+
+    memOutStr = ""
+    for i in memVals:
+        memOutStr += (str(i) + "\n")
+    fileMemOut = open("out_memory.txt", "w")
+    fileMemOut.write(memOutStr)
+    fileMemOut.close()
 
 if __name__ == "__main__":
     main()
