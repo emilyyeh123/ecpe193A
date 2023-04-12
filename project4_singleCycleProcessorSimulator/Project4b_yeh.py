@@ -147,10 +147,22 @@ def main():
             # check if lw instr
             elif instrOp == "100011":
                 print("lw  rt ", rt, " imm(rs) ", imm, "(", rs, ")")
+                # set control signal
+                controlSignal += "011110000"
+                # perform instr, get memory address, update register
+                memAddress = int( (registers[rs] + imm)/4 ) # must segfault if invalid int
+                registers[rt] = memVals[memAddress]
+                print("\t accessing memVal[", memAddress, "] = ", memVals[memAddress],"; reg[", rt,"] = ", registers[rt])
 
             # check if sw instr
             elif instrOp == "101011":
                 print("sw  rt ", rt, " imm(rs) ", imm, "(", rs, ")")
+                # set control signal
+                controlSignal += "X1X001000"
+                # perform instr, get memory address, update val in memory
+                memAddress = int( (registers[rs] + imm)/4 ) # must segfault if invalid int
+                memVals[memAddress] = registers[rt]
+                print("\t accessing reg[", rt,"] = ", registers[rt], "; memVal[", memAddress, "] = ", memVals[memAddress])
 
         controlSignal += "\n"
         pcRegVals += writeCurrentPCReg(pc, registers) + "\n"
