@@ -72,8 +72,6 @@ def main():
         instrOp = binInstr[lineNum][0:6]
         rs = int( binInstr[lineNum][6:11] , 2 ) # typecast binary reg val to dec
         rt = int( binInstr[lineNum][11:16] , 2 ) # typecast binary reg val to dec
-        #print(pc, " | ", lineNum, "\t\t", instrOp, rs, rt)
-        #print(pc, " | ", lineNum, end = "\t\t")
 
         # Check if r-type instr
         if instrOp == "000000":
@@ -85,11 +83,9 @@ def main():
             rd = int( binInstr[lineNum][16:21] , 2 ) # typecast binary reg val to dec
 
             if instrFunc == "100000":
-                print("add  $", rd, ", $", rs, ", $", rt)
                 # perform instruction on appropriate registers
                 registers[rd] = registers[rs] + registers[rt]
             elif instrFunc == "100010":
-                print("sub  $", rd, ", $", rs, ", $", rt)
                 # perform instruction on appropriate registers
                 registers[rd] = registers[rs] - registers[rt]
             
@@ -116,7 +112,6 @@ def main():
 
             # check if addi instr
             if instrOp == "001000":
-                print("addi $", rt, ", $", rs, ", ", imm)
                 # set control signal
                 controlSignal += "0101000000"
                 # perform addi instr on appropriate registers
@@ -129,16 +124,12 @@ def main():
 
             # check if beq instr
             elif instrOp == "000100":
-                print("beq  $", rs, ", $", rt, ",", imm, end = "\t")
                 # set control signal
                 controlSignal += "X0X0001010"
                 # perform instr, update pc & lineNum as necessary 
                 if registers[rt] == registers[rs]:
                     lineNum += imm
                     pc += (imm*4)
-                    print("\t both registers are equal, beq instr performed")
-                else:
-                    print("\t beq false, continue to next instr")
 
                 if registers[rt] - registers[rs] == 0:
                     # set ALU zero bit high
@@ -146,16 +137,12 @@ def main():
 
             # check if bne instr
             elif instrOp == "000101":
-                print("bne  $", rs, ", $", rt, ",", imm, end = "\t")
                 # set control signal
                 controlSignal += "X0X0001110"
                 # perform instr, update pc & lineNum as necessary 
                 if registers[rt] != registers[rs]:
                     lineNum += imm
                     pc += (imm*4)
-                    print("\t both registers are equal, beq instr performed")
-                else:
-                    print("\t beq false, continue to next instr")
 
                 if registers[rt] - registers[rs] == 0:
                     # set ALU zero bit high
@@ -163,13 +150,11 @@ def main():
 
             # check if lw instr
             elif instrOp == "100011":
-                print("lw   $", rt, ",", imm, "( $", rs, ")", end = "\t")
                 # set control signal
                 controlSignal += "0111100000"
                 # perform instr, get memory address, update register
                 memAddress = int( (registers[rs] + imm)/4 ) # must segfault if invalid int
                 registers[rt] = memVals[memAddress]
-                print("\t accessing memVal[", memAddress, "] =", memVals[memAddress],"; reg[", rt,"] =", registers[rt])
 
                 if memAddress == 0:
                     # set ALU zero bit high
@@ -177,13 +162,11 @@ def main():
 
             # check if sw instr
             elif instrOp == "101011":
-                print("sw   $", rt, ",", imm, "( $", rs, ")", end = "\t")
                 # set control signal
                 controlSignal += "X1X0010000"
                 # perform instr, get memory address, update val in memory
                 memAddress = int( (registers[rs] + imm)/4 ) # must segfault if invalid int
                 memVals[memAddress] = registers[rt]
-                print("\t accessing reg[", rt,"] =", registers[rt], "; memVal[", memAddress, "] =", memVals[memAddress])
 
                 if memAddress == 0:
                     # set ALU zero bit high
