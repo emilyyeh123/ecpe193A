@@ -30,16 +30,21 @@ def main():
     parser.add_argument("--memfile", required = True, help = "txt file containing sequence of memory accesses where each line is a memory address in hexadecimal")
     args = parser.parse_args()
 
-    if args.type == "d":
-        print("type: direct-mapped cache")
-        if args.nway is not None:
-            print("Invalid direct-mapped cache argument")
+    # program must first verify if an input configuration is possible based on cache type
+    # return an error and exit program if invalid input arguments
+    if args.type == "d" and args.nway is not None:
+        print("INVALID ARGUMENTS! Direct-Mapped cache should not have nway argument.")
+        exit()
     elif args.type == "s":
-        print("type: set associative cache")
-        if args.nway is None:
-            print("Invalid direct-mapped cache argument")
-    else:
-        print("Invalid cache type")
+        try:
+            # if nway argument can convert to int, argument is valid
+            int(args.nway)
+        except:
+            print("INVALID ARGUMENTS! Set Associative cache should have an integer-type nway argument.")
+            exit()
+
+    # test if number is power of 2:
+    # power of 2 if binary value has only one 1
 
 if __name__ == "__main__":
     main()
