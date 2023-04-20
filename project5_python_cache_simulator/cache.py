@@ -30,6 +30,7 @@ def main():
     numIndexBits = 0
     currTagBits = ""
     currIndexBits = ""
+    cache = [] # list of dictionaries, each dictionary is an additional set
 
     parser = argparse.ArgumentParser(description = "Project 5: Python Cache Simulator")
     parser.add_argument("--type", required = True, help = "Valid Cache Types: d for direct-mapped and s for set associative")
@@ -76,9 +77,19 @@ def main():
         print("INVALID ARGUMENTS!\n> Block Size must be a power of 2.")
         exit()
 
+    # get number of tag bits and index bits
     numTagBits = int( addressSize - math.log2(args.cache_size) )
     numIndexBits = int( math.log2(args.cache_size) - math.log2(args.block_size) )
     print(numTagBits, numIndexBits, "\n")
+
+    # set up list of dictionaries
+    if args.nway is None:
+        cache.append({})
+    else:
+        for i in range(args.nway):
+            cache.append({})
+            print("set ", i)
+    print(cache)
 
     # open file
     memFileIn = open(args.memfile, "r")
