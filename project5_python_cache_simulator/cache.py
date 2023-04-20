@@ -31,6 +31,7 @@ def main():
     currTagBits = ""
     currIndexBits = ""
     cache = [] # list of dictionaries, each dictionary is an additional set
+    hit = False # 0 if miss, 1 if hit
 
     parser = argparse.ArgumentParser(description = "Project 5: Python Cache Simulator")
     parser.add_argument("--type", required = True, help = "Valid Cache Types: d for direct-mapped and s for set associative")
@@ -80,7 +81,7 @@ def main():
     # get number of tag bits and index bits
     numTagBits = int( addressSize - math.log2(args.cache_size) )
     numIndexBits = int( math.log2(args.cache_size) - math.log2(args.block_size) )
-    print(numTagBits, numIndexBits, "\n")
+    #print(numTagBits, numIndexBits, "\n")
 
     # set up list of dictionaries
     if args.nway is None:
@@ -88,39 +89,61 @@ def main():
     else:
         for i in range(args.nway):
             cache.append({})
-            print("set ", i)
-    print(cache)
 
     # open file
     memFileIn = open(args.memfile, "r")
 
     for line in memFileIn:
+        hit = False
         outStr += line.strip() + "|"
 
         # convert memory address from hex to binary
         memAddress = int(line.strip(), 16) # convert hex to decimal
         memAddress = f'{memAddress:032b}' # convert decimal to 32-bit binary (string type)
 
-        #print(line.strip(), memAddress)
+        #print(line.strip(), memAddress, end = " ")
 
         # print tag bits and index bits
         currTagBits = memAddress[0:numTagBits]
         currIndexBits = memAddress[numTagBits:numTagBits+numIndexBits]
         outStr += currTagBits + "|" + currIndexBits + "|"
+        print(line.strip(), currTagBits, currIndexBits, end = "  ||  ")
 
-        # Check if hit, miss, or unaligned
+        for thisDict in cache: # iterate through all sets
+            if currIndexBits in thisDict: # if index (key) exists,
+                # check if tag bits match
+                if currTagBits == thisDict[currIndexBits]: # if match, hit and exit loop
+                    hit = True
+                    print("HIT!")
+                    break
+                # if no match, continue to next dictionary and repeat
+                elif thisDict == cache[-1]:
+                    # if no match, but this is the last possible set, 
+                    # replace tag (value) at index (key), miss, and complete loop
+                    thisDict = cache[0]
+                    thisDict[currIndexBits] = currTagBits
+                    print("iterated through all dictionaries and no hits")
+            else:
+                # if index does not yet exist in current dictionary,
+                # add index and tag as key, value pair, miss, and exit loop
+                thisDict[currIndexBits] = currTagBits
+                print("index does not yet exist in current dict")
+                break
+
+        # print hit, miss, or unaligned
         if not (memAddress[-2:] == "00"): # if not divisible by 4
             # alignment: aligned if number is divisible by 4 (last two bits of address is 00)
-            outStr += "u"
-        #elif :
+            outStr += "U"
+        elif hit:
+            outStr += "HIT"
+        else:
+            outStr += "MISS"
 
         outStr += "\n"
 
     memFileIn.close()
 
-    # test if number is power of 2:
-    # power of 2 if binary value has only one 1
-
+    # output to cache.txt file
     cacheOutFile = open("cache.txt", "w")
     cacheOutFile.write(outStr)
     cacheOutFile.close()
