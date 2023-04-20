@@ -22,6 +22,10 @@ python3 cache.py --type=d --cache_size=256 --block_size=64 --memfile=mem1.txt
 import argparse
 
 def main():
+    outStr = ""
+    memAddress = 0 # store current address in binary
+    addressSize = 32 # 32-bit memory addresses
+
     parser = argparse.ArgumentParser(description = "Project 5: Python Cache Simulator")
     parser.add_argument("--type", required = True, help = "Valid Cache Types: d for direct-mapped and s for set associative")
     parser.add_argument("--nway", required = False, help = "specify number of ways if set associative cache")
@@ -33,18 +37,60 @@ def main():
     # program must first verify if an input configuration is possible based on cache type
     # return an error and exit program if invalid input arguments
     if args.type == "d" and args.nway is not None:
-        print("INVALID ARGUMENTS! Direct-Mapped cache should not have nway argument.")
+        print("INVALID ARGUMENTS!\n> Direct-Mapped cache should not have nway argument.")
         exit()
     elif args.type == "s":
         try:
             # if nway argument can convert to int, argument is valid
-            int(args.nway)
+            args.nway = int(args.nway)
         except:
-            print("INVALID ARGUMENTS! Set Associative cache should have an integer-type nway argument.")
+            pass
+        if type(args.nway) is not int or args.nway <= 1:
+            print("INVALID ARGUMENTS!\n> Set Associative cache should have an integer-type nway argument >= 2.")
             exit()
+
+    # verify cache & block size are powers of 2
+    # use bit manipulation: (n & (n-1) == 0) and n!=0
+    #    >> True if n is a power of 2
+    # Explanation:
+    # - powers of 2 have exactly 1 bit set to 1
+    # - subtract 1 from a power of 2 and all bits will flip
+    # - AND the two inverse values to produce a 0
+    # - only exception: zero
+    try:
+        # typecast sizes to int or throw error and exit if not possible
+        args.cache_size = int(args.cache_size)
+        args.block_size = int(args.block_size)
+    except:
+        print("INVALID ARGUMENTS!\n> Cache Size and Block Size must be integer values.")
+        exit()
+    if not( (args.cache_size & (args.cache_size-1) == 0) and args.cache_size!=0 ): # if not a power of 2
+        print("INVALID ARGUMENTS!\n> Cache Size must be a power of 2.")
+        exit()
+    if not( (args.block_size & (args.block_size-1) == 0) and args.block_size!=0 ): # if not a power of 2
+        print("INVALID ARGUMENTS!\n> Block Size must be a power of 2.")
+        exit()
+
+    # open file
+    memFileIn = open(args.memfile, "r")
+
+    for line in memFileIn:
+        outStr += line.strip() + "|"
+
+        memAddress = int(line.strip(), 16) # convert hex to decimal
+        memAddress = f'{memAddress:032b}' # convert decimal to 32-bit binary (string type)
+
+        #print(line.strip(), "|", memAddress)
+        outStr += "\n"
+
+    memFileIn.close()
 
     # test if number is power of 2:
     # power of 2 if binary value has only one 1
+
+    cacheOutFile = open("cache.txt", "w")
+    cacheOutFile.write(outStr)
+    cacheOutFile.close()
 
 if __name__ == "__main__":
     main()
