@@ -20,11 +20,16 @@ python3 cache.py --type=d --cache_size=256 --block_size=64 --memfile=mem1.txt
 '''
 
 import argparse
+import math
 
 def main():
     outStr = ""
     memAddress = 0 # store current address in binary
     addressSize = 32 # 32-bit memory addresses
+    numTagBits = 0
+    numIndexBits = 0
+    currTagBits = ""
+    currIndexBits = ""
 
     parser = argparse.ArgumentParser(description = "Project 5: Python Cache Simulator")
     parser.add_argument("--type", required = True, help = "Valid Cache Types: d for direct-mapped and s for set associative")
@@ -71,16 +76,33 @@ def main():
         print("INVALID ARGUMENTS!\n> Block Size must be a power of 2.")
         exit()
 
+    numTagBits = int( addressSize - math.log2(args.cache_size) )
+    numIndexBits = int( math.log2(args.cache_size) - math.log2(args.block_size) )
+    print(numTagBits, numIndexBits, "\n")
+
     # open file
     memFileIn = open(args.memfile, "r")
 
     for line in memFileIn:
         outStr += line.strip() + "|"
 
+        # convert memory address from hex to binary
         memAddress = int(line.strip(), 16) # convert hex to decimal
         memAddress = f'{memAddress:032b}' # convert decimal to 32-bit binary (string type)
 
-        #print(line.strip(), "|", memAddress)
+        #print(line.strip(), memAddress)
+
+        # print tag bits and index bits
+        currTagBits = memAddress[0:numTagBits]
+        currIndexBits = memAddress[numTagBits:numTagBits+numIndexBits]
+        outStr += currTagBits + "|" + currIndexBits + "|"
+
+        # Check if hit, miss, or unaligned
+        if not (memAddress[-2:] == "00"): # if not divisible by 4
+            # alignment: aligned if number is divisible by 4 (last two bits of address is 00)
+            outStr += "u"
+        #elif :
+
         outStr += "\n"
 
     memFileIn.close()
