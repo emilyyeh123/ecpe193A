@@ -32,6 +32,8 @@ def main():
     currIndexBits = ""
     cache = [] # list of dictionaries, each dictionary is an additional set
     hit = False # 0 if miss, 1 if hit
+    hitCount = 0 # count number of hits
+    addressCount = 0 # count number of addresses to use for hit rate
 
     parser = argparse.ArgumentParser(description = "Project 5: Python Cache Simulator")
     parser.add_argument("--type", required = True, help = "Valid Cache Types: d for direct-mapped and s for set associative")
@@ -95,6 +97,7 @@ def main():
 
     for line in memFileIn:
         hit = False
+        addressCount += 1
         outStr += line.strip() + "|"
 
         # convert memory address from hex to binary
@@ -136,12 +139,16 @@ def main():
             outStr += "U"
         elif hit:
             outStr += "HIT"
+            hitCount += 1
         else:
             outStr += "MISS"
 
         outStr += "\n"
 
     memFileIn.close()
+
+    hitRate = f'{(hitCount/addressCount):.1%}'
+    outStr += "\nHit Rate: " + hitRate + "\n"
 
     # output to cache.txt file
     cacheOutFile = open("cache.txt", "w")
