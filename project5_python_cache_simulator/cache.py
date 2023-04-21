@@ -26,6 +26,8 @@ def main():
     outStr = ""
     memAddress = 0 # store current address in binary
     addressSize = 32 # 32-bit memory addresses
+    byteOffset = 2 # byte offset is assumed to be 2 bits
+    wordOffset = 0
     numTagBits = 0
     numIndexBits = 0
     currTagBits = ""
@@ -73,17 +75,18 @@ def main():
     except:
         print("INVALID ARGUMENTS!\n> Cache Size and Block Size must be integer values.")
         exit()
-    if not( (args.cache_size & (args.cache_size-1) == 0) and args.cache_size!=0 ): # if not a power of 2
+    if not( (args.cache_size & (args.cache_size-1) == 0) and args.cache_size!=0 ): # if cache size not a power of 2
         print("INVALID ARGUMENTS!\n> Cache Size must be a power of 2.")
         exit()
-    if not( (args.block_size & (args.block_size-1) == 0) and args.block_size!=0 ): # if not a power of 2
+    if not( (args.block_size & (args.block_size-1) == 0) and args.block_size!=0 ): # if block size not a power of 2
         print("INVALID ARGUMENTS!\n> Block Size must be a power of 2.")
         exit()
 
-    # get number of tag bits and index bits
-    numTagBits = int( addressSize - math.log2(args.cache_size) )
+    # get number of index, tag, and word bits
     numIndexBits = int( math.log2(args.cache_size) - math.log2(args.block_size) )
-    #print(numTagBits, numIndexBits, "\n")
+    wordOffset = int( math.log2(args.block_size/4) ) # number of words per block = block size / 4 bytes per word
+    numTagBits = addressSize - numIndexBits -  wordOffset - byteOffset
+    print(numTagBits, numIndexBits, wordOffset, "\n")
 
     # set up list of dictionaries
     if args.nway is None:
@@ -104,20 +107,20 @@ def main():
         memAddress = int(line.strip(), 16) # convert hex to decimal
         memAddress = f'{memAddress:032b}' # convert decimal to 32-bit binary (string type)
 
-        #print(line.strip(), memAddress, end = " ")
+        print(line.strip(), memAddress) #, end = " ")
 
         # print tag bits and index bits
         currTagBits = memAddress[0:numTagBits]
         currIndexBits = memAddress[numTagBits:numTagBits+numIndexBits]
         outStr += currTagBits + "|" + currIndexBits + "|"
-        print(line.strip(), currTagBits, currIndexBits, end = "  ||  ")
+        #print(line.strip(), currTagBits, currIndexBits, end = "  ||  ")
 
         for thisDict in cache: # iterate through all sets
             if currIndexBits in thisDict: # if index (key) exists,
                 # check if tag bits match
                 if currTagBits == thisDict[currIndexBits]: # if match, hit and exit loop
                     hit = True
-                    print("HIT!")
+                    #print("HIT!")
                     break
                 # if no match, continue to next dictionary and repeat
                 elif thisDict == cache[-1]:
@@ -125,12 +128,12 @@ def main():
                     # replace tag (value) at index (key), miss, and complete loop
                     thisDict = cache[0]
                     thisDict[currIndexBits] = currTagBits
-                    print("iterated through all dictionaries and no hits")
+                    #print("iterated through all dictionaries and no hits")
             else:
                 # if index does not yet exist in current dictionary,
                 # add index and tag as key, value pair, miss, and exit loop
                 thisDict[currIndexBits] = currTagBits
-                print("index does not yet exist in current dict")
+                #print("index does not yet exist in current dict")
                 break
 
         # print hit, miss, or unaligned
@@ -147,6 +150,7 @@ def main():
 
     memFileIn.close()
 
+    # calculate hit rate
     hitRate = f'{(hitCount/addressCount):.1%}'
     outStr += "\nHit Rate: " + hitRate + "\n"
 
