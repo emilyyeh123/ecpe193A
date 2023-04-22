@@ -86,7 +86,7 @@ def main():
     numIndexBits = int( math.log2(args.cache_size) - math.log2(args.block_size) )
     wordOffset = int( math.log2(args.block_size/4) ) # number of words per block = block size / 4 bytes per word
     numTagBits = addressSize - numIndexBits -  wordOffset - byteOffset
-    print(numTagBits, numIndexBits, wordOffset, "\n")
+    print("Tag:", numTagBits, "Index:", numIndexBits, "Word:", wordOffset, "\n")
 
     # set up list of dictionaries
     if args.nway is None:
@@ -106,21 +106,23 @@ def main():
         # convert memory address from hex to binary
         memAddress = int(line.strip(), 16) # convert hex to decimal
         memAddress = f'{memAddress:032b}' # convert decimal to 32-bit binary (string type)
-
-        print(line.strip(), memAddress) #, end = " ")
+        #print(line.strip(), memAddress, end = " || ")
 
         # print tag bits and index bits
         currTagBits = memAddress[0:numTagBits]
         currIndexBits = memAddress[numTagBits:numTagBits+numIndexBits]
         outStr += currTagBits + "|" + currIndexBits + "|"
-        #print(line.strip(), currTagBits, currIndexBits, end = "  ||  ")
+
+        currWordBits = memAddress[numTagBits+numIndexBits:numTagBits+numIndexBits+wordOffset] 
+        currByteOffset = memAddress[numTagBits+numIndexBits+wordOffset:numTagBits+numIndexBits+wordOffset+byteOffset]
+        print(line.strip(), currTagBits, currIndexBits, currWordBits, currByteOffset, end = " || ")
 
         for thisDict in cache: # iterate through all sets
             if currIndexBits in thisDict: # if index (key) exists,
                 # check if tag bits match
                 if currTagBits == thisDict[currIndexBits]: # if match, hit and exit loop
                     hit = True
-                    #print("HIT!")
+                    print("HIT!")
                     break
                 # if no match, continue to next dictionary and repeat
                 elif thisDict == cache[-1]:
@@ -128,12 +130,12 @@ def main():
                     # replace tag (value) at index (key), miss, and complete loop
                     thisDict = cache[0]
                     thisDict[currIndexBits] = currTagBits
-                    #print("iterated through all dictionaries and no hits")
+                    print("iterated through all dictionaries and no hits")
             else:
                 # if index does not yet exist in current dictionary,
                 # add index and tag as key, value pair, miss, and exit loop
                 thisDict[currIndexBits] = currTagBits
-                #print("index does not yet exist in current dict")
+                print("index does not yet exist in current dict")
                 break
 
         # print hit, miss, or unaligned
